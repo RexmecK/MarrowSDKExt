@@ -155,25 +155,25 @@ namespace SLZ.Marrow.Interaction
 		{
 		}
 
-		public IReadOnlyList<MarrowEntity> ConnectedEntities
-		{
-			get
-			{
-				return null;
-			}
-		}
+		//public IReadOnlyList<MarrowEntity> ConnectedEntities
+		//{
+		//	get
+		//	{
+		//		return null;
+		//	}
+		//}
 
-		internal void AddConnection(MarrowEntity entity)
-		{
-		}
-
-		internal void RemoveConnection(MarrowEntity entity)
-		{
-		}
-
-		private void DFS(MarrowEntity entity)
-		{
-		}
+		//internal void AddConnection(MarrowEntity entity)
+		//{
+		//}
+//
+		//internal void RemoveConnection(MarrowEntity entity)
+		//{
+		//}
+//
+		//private void DFS(MarrowEntity entity)
+		//{
+		//}
 
 		public MarrowBody AnchorBody
 		{
@@ -395,6 +395,22 @@ namespace SLZ.Marrow.Interaction
 		{
 		}
 
+		//public void RegisterEventHandler(IMarrowEntityPoseable poseable)
+		//{
+		//}
+//
+		//public void UnregisterEventHandler(IMarrowEntityPoseable poseable)
+		//{
+		//}
+//
+		//internal void WritePose(MarrowEntityPose inputPose)
+		//{
+		//}
+//
+		//internal void ReadPose(ref MarrowEntityPose outputPose)
+		//{
+		//}
+
 		private void SpawnEvents_Awake()
 		{
 		}
@@ -473,15 +489,15 @@ namespace SLZ.Marrow.Interaction
 
 		private bool _isDisableOnCullPrevented;
 
-		private List<MarrowEntity> _outLinks;
-
-		private List<MarrowEntity> _inLinks;
-
-		private bool _isDirty;
-
-		private HashSet<MarrowEntity> _visited;
-
-		private List<MarrowEntity> _connectedEntities;
+		//private List<MarrowEntity> _outLinks;
+//
+		//private List<MarrowEntity> _inLinks;
+//
+		//private bool _isDirty;
+//
+		//private HashSet<MarrowEntity> _visited;
+//
+		//private List<MarrowEntity> _connectedEntities;
 
 		private MarrowEntity.HibernationSources allHibernationSources;
 
@@ -509,6 +525,8 @@ namespace SLZ.Marrow.Interaction
 		private MarrowEntity.HibernationSources _hibernationFlags;
 
 		private List<MarrowJoint> _runtimeJoints;
+		
+		//private List<IMarrowEntityPoseable> _poseables;
 
 		[SerializeField]
 		private Poolee _poolee;
@@ -534,6 +552,16 @@ namespace SLZ.Marrow.Interaction
 			}
 
 			//bodies
+			Rigidbody[] rigidbodies = GetComponentsInChildren<Rigidbody>();
+			foreach(Rigidbody rigidbody in rigidbodies)
+			{
+				MarrowBody body = rigidbody.GetComponent<MarrowBody>();
+				if( body == null )
+				{
+                    rigidbody.gameObject.AddComponent<MarrowBody>();
+				}
+			}
+
 			MarrowBody[] marrowBodies = GetComponentsInChildren<MarrowBody>(true);
 			List<MarrowBody> validMarrowBodies = new List<MarrowBody>();
 			foreach(MarrowBody marrowBody in marrowBodies)	
@@ -552,7 +580,26 @@ namespace SLZ.Marrow.Interaction
 				_anchorBody = _bodies[0];
 			}
 
-			//joints
+			//joints			
+			ConfigurableJoint[] joints = GetComponentsInChildren<ConfigurableJoint>(true);
+			foreach(ConfigurableJoint joint in joints)
+			{
+				bool linked = false;
+				foreach(MarrowJoint marrowJoint in joint.GetComponents<MarrowJoint>())
+				{
+					if(marrowJoint.configurableJoint == joint)
+					{
+						linked = true;
+						break;
+					}
+				}
+				if(!linked)
+				{
+					MarrowJoint newJoint = joint.gameObject.AddComponent<MarrowJoint>();
+					newJoint.configurableJoint = joint;
+				}
+			}
+
 			MarrowJoint[] marrowJoints = GetComponentsInChildren<MarrowJoint>(true);
 			List<MarrowJoint> validMarrowJoints = new List<MarrowJoint>();
 			foreach(MarrowJoint marrowJoint in marrowJoints)	
@@ -585,12 +632,7 @@ namespace SLZ.Marrow.Interaction
 			_behaviours = linkedbehaviours.ToArray();
 
 			//poolee
-			Poolee poolee = GetComponent<Poolee>();
-			//if(poolee == null)
-			//{
-			//	poolee = gameObject.AddComponent<Poolee>();
-			//}
-			_poolee = poolee;
+			_poolee = GetComponent<Poolee>();
 
 			//spawn event components
 			SpawnEvents[] spawnEvents = GetComponentsInChildren<SpawnEvents>(true);
@@ -620,34 +662,7 @@ namespace SLZ.Marrow.Interaction
     	    UnityEditor.UIElements.InspectorElement.FillDefaultInspector(root, serializedObject, this);
     	    return root;
     	}
-/*
-	    public override void OnInspectorGUI()
-	    {
-			GameObject behaviourGO = ((MarrowEntity)target).gameObject;
-
-			if(behaviourGO != null && !PrefabUtility.IsPartOfPrefabAsset(behaviourGO))
-			{
-				if(((MarrowEntity)target).Poolee == null)
-				{
-					EditorGUILayout.HelpBox("Poolee not defined!", MessageType.Warning);
-					if(GUILayout.Button("Add Poolee"))
-					{
-						if(behaviourGO.GetComponent<Poolee>() == null)
-						{
-							behaviourGO.AddComponent<Poolee>();
-						}
-						PopulateMarrowComponents(behaviourGO);
-					}
-				}
-    	    	if(GUILayout.Button("Validate"))
-        		{
-					PopulateMarrowComponents(behaviourGO);
-				}
-			}
 	
-        	DrawDefaultInspector();
-	    }
-*/
 		[MenuItem("GameObject/[Experimental] Delete Marrow Components", false, 0)]
     	public static void DeleteMarrowComponents(MenuCommand menuCommand) {
     	    var selected = Selection.gameObjects[0];
@@ -667,7 +682,6 @@ namespace SLZ.Marrow.Interaction
 				Undo.RecordObjects(marrowBodies, "undo bodies");
 				Undo.RecordObjects(marrowJoints, "undo joints");
 				Undo.RecordObjects(marrowEntities, "undo entities");
-				//Undo.RecordObjects(marrowBehaviours, "undo behaviours");
 				Undo.RecordObjects(poolees, "undo poolees");
 
 				foreach(MarrowBody body in marrowBodies)
@@ -687,10 +701,6 @@ namespace SLZ.Marrow.Interaction
 				{
 					Object.DestroyImmediate(entity);
 				}
-				//foreach(MarrowBehaviour behaviour in marrowBehaviours)
-				//{
-				//	Object.DestroyImmediate(behaviour);
-				//}
 				foreach(Poolee poolee in poolees)
 				{
 					Object.DestroyImmediate(poolee);
@@ -707,10 +717,6 @@ namespace SLZ.Marrow.Interaction
 			GameObject target = Selection.activeGameObject;
 			if(target != null && EditorUtility.DisplayDialog("Confirmation Dialog", "This will populate necessary components for the entities. Make sure you backup this object", "Yes", "No") )
 			{
-				if( target.GetComponent<Poolee>() == null )
-				{
-					target.AddComponent<Poolee>();
-				}
 				PopulateMarrowComponents(target);
 			}
 		}
@@ -727,27 +733,12 @@ namespace SLZ.Marrow.Interaction
 				go.AddComponent<MarrowEntity>();
 			}
 
-			Rigidbody[] rigidbodies = go.GetComponentsInChildren<Rigidbody>();
-			foreach(Rigidbody rigidbody in rigidbodies)
+			if( go.GetComponent<Poolee>() == null )
 			{
-				MarrowBody body = rigidbody.GetComponent<MarrowBody>();
-				if( body == null )
-				{
-					body = rigidbody.gameObject.AddComponent<MarrowBody>();
-				}
-			}
-			
-			ConfigurableJoint[] joints = go.GetComponentsInChildren<ConfigurableJoint>();
-			foreach(ConfigurableJoint joint in joints)
-			{
-				MarrowJoint marrowJoint = joint.GetComponent<MarrowJoint>();
-				if( marrowJoint == null )
-				{
-					marrowJoint = joint.gameObject.AddComponent<MarrowJoint>();
-				}
+				go.AddComponent<Poolee>();
 			}
 
-			MarrowEntity[] marrowEntities = go.GetComponentsInChildren<MarrowEntity>();
+			MarrowEntity[] marrowEntities = go.GetComponentsInChildren<MarrowEntity>(true);
 			foreach(MarrowEntity entity in marrowEntities)
 			{
 				entity.ValidateComponent();

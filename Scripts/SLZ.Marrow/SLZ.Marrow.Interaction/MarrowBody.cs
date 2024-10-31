@@ -362,6 +362,10 @@ namespace SLZ.Marrow.Interaction
             }
 
             bounds.center = bounds.center - gameobject.transform.position;
+			if (bounds.size == Vector3.zero)
+			{
+				bounds.size = new Vector3(0.05f,0.05f,0.05f);
+			}
             DestroyImmediate(gameobject);
             DestroyImmediate(root);
             fakeScene.Cleanup();
@@ -374,10 +378,6 @@ namespace SLZ.Marrow.Interaction
 		{
 #if UNITY_EDITOR
 			Bounds bounds = GetBounds();
-			if (bounds.size == Vector3.zero)
-			{
-				bounds.size = new Vector3(0.025f,0.025f,0.05f);
-			}
 			_bounds = bounds;
 #endif
 		}
@@ -519,27 +519,6 @@ namespace SLZ.Marrow.Interaction
     	    return root;
     	}
 
-/*
-	    public override void OnInspectorGUI()
-	    {
-			MarrowBody behaviour = (MarrowBody)target;
-
-			if (!PrefabUtility.IsPartOfPrefabAsset(behaviour.gameObject))
-			{
-    	    	if(GUILayout.Button("Validate"))
-        		{
-					behaviour.ValidateComponent();
-        		}
-
-    	    	if(GUILayout.Button("Add Tracker"))
-        		{
-					behaviour.GenerateNewTracker();
-        		}
-			}
-	
-        	DrawDefaultInspector();
-	    }
-		*/
 	}
 #endif
 }
